@@ -1,25 +1,37 @@
-WIN = windows
-LIN = linux
-SCRIPT = Geowar.cpp
-WIN_EXE = --onefile $(SCRIPT) --distpath $(WIN) --workpath $(WIN) --specpath $(WIN) --clean
-LIN_EXE = --onefile $(SCRIPT) --distpath $(LIN) --workpath $(LIN) --specpath $(LIN) --clean
+CXX = g++
+CXXFLAGS = -std=c++11
+SRCS = Geowar.cpp
+TARGET = geowar
 
+Windows:
+ifeq ($(OS),Windows_NT)
+	TARGET := $(TARGET).exe
+	CXXFLAGS += -DWINDOWS
+	LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
+endif
 
-windows:
-	mkdir $(WIN)
-	pip install pyinstaller
-	pyinstaller $(WIN_EXE)
-	./$(WIN)/Geowar.exe
+Linux:
+ifeq ($(OS),Linux)
+	CXXFLAGS += -DLINUX
+	LDFLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf
+endif
 
-linux:
-	mkdir $(LIN)
-	pip install pyinstaller
-	pyinstaller $(LIN_EXE)
-	./$(LIN)/Geowar.exe
+Web:
+ifeq ($(OS),Emscripten)
+	CXX = emcc
+	TARGET := index.html
+	CXXFLAGS += --preload-file assets -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2
+endif
 
-web:
-	cmd /c start http://localhost:8000/Geowar.html
-	python -m http.server 8000
+all: $(TARGET)
+
+$(TARGET): $(SRCS)
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET) $(LDFLAGS)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: clean
 
 clean:
 	rm -rf $(WIN)
